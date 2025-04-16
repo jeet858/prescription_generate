@@ -94,6 +94,7 @@ model VerificationToken {
     pin_code Int?
     country String?
     prescriptions Prescription[]
+    date DateTime @default(now())
  }
 
  model Prescription{
@@ -101,11 +102,11 @@ model VerificationToken {
     patient_id String
     date DateTime
     symptom String
-    bp String
+    bp String?
     tests String?
     reports String?
     diagnosis String
-    weight Int
+    weight Int?
     note String?
     patient Patient @relation(fields: [patient_id], references: [patient_id])   
     prescription_medicine_data PrescriptionMedicineData[]

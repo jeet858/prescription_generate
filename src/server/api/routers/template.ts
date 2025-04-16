@@ -21,15 +21,23 @@ const templateInputSchema = z.object({
     }),
   ),
 });
-const findtemplateDataSchema = z.object({
+const findTemplateDataSchema = z.object({
   template_id: z.string({
     required_error: "Describe your basic units name",
   }),
 });
-
+const deleteTemplateDataSchema = z.object({
+  template_id: z.string({
+    required_error: "Describe your basic units name",
+  }),
+});
 export const templateRouter = createTRPCRouter({
   get_all: protectedProcedure.query(async ({ ctx }) => {
-    const template = await ctx.db.template.findMany();
+    const template = await ctx.db.template.findMany({
+      orderBy: {
+        template_id: "asc",
+      },
+    });
     await ctx.db.$disconnect();
     return template;
   }),
@@ -39,7 +47,7 @@ export const templateRouter = createTRPCRouter({
     return templateData;
   }),
   template_data_by_id: protectedProcedure
-    .input(findtemplateDataSchema)
+    .input(findTemplateDataSchema)
     .query(async ({ ctx, input }) => {
       const templateData = await ctx.db.templateData.findMany({
         where: {
@@ -53,6 +61,13 @@ export const templateRouter = createTRPCRouter({
     .input(templateInputSchema)
     .mutation(async ({ ctx, input }) => {
       const arr = [];
+      arr.push(
+        ctx.db.templateData.deleteMany({
+          where: {
+            template_id: input.template_id,
+          },
+        }),
+      );
       const template = ctx.db.template.upsert({
         where: {
           template_id: input.template_id,
@@ -106,5 +121,18 @@ export const templateRouter = createTRPCRouter({
         arr.push(temp);
       });
       return await ctx.db.$transaction(arr);
+    }),
+  deleteTemplate: protectedProcedure
+    .input(deleteTemplateDataSchema)
+    .mutation(async ({ ctx, input }) => {
+      const deleteTemplate = ctx.db.template.delete({
+        where: { template_id: input.template_id },
+      });
+      const deleteTemplateData = ctx.db.templateData.deleteMany({
+        where: {
+          template_id: input.template_id,
+        },
+      });
+      return await ctx.db.$transaction([deleteTemplateData, deleteTemplate]);
     }),
 });

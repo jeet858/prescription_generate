@@ -1,8 +1,7 @@
-import { register } from "module";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
 
-const registerPatientSchema = z.object({
+const patientSchema = z.object({
   first_name: z.string({
     required_error: "Describe your basic units name",
   }),
@@ -32,45 +31,24 @@ const registerPatientSchema = z.object({
   pin_code: z.string(),
   country: z.string(),
 });
-const editPatientSchema = z.object({
-  first_name: z.string({
-    required_error: "Describe your basic units name",
-  }),
-  last_name: z.string({
-    required_error: "Describe your basic units name",
-  }),
-  contact_number: z.string({
-    required_error: "Describe your basic units name",
-  }),
-  email_id: z.string() || z.undefined(),
+
+const findPatientSchema = z.string();
+const deletePatientSchema = z.object({
   patient_id: z.string({
     required_error: "Describe your basic units name",
   }),
-  gender: z.string({
-    required_error: "Describe your basic units name",
-  }),
-  fathers_name: z.string(),
-  husbands_name: z.string(),
-  age: z.string({
-    required_error: "Describe your basic units name",
-  }),
-  address_line1: z.string(),
-  address_line2: z.string(),
-  city: z.string(),
-  state: z.string(),
-  pin_code: z.string(),
-  country: z.string(),
 });
-const findPatientSchema = z.string();
 
 export const patientRouter = createTRPCRouter({
   get_all: protectedProcedure.query(async ({ ctx }) => {
-    const patients = await ctx.db.patient.findMany();
+    const patients = await ctx.db.patient.findMany({
+      orderBy: { date: "asc" },
+    });
     await ctx.db.$disconnect();
-    return patients;
+    return patients.reverse();
   }),
   register_patient: protectedProcedure
-    .input(registerPatientSchema)
+    .input(patientSchema)
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.patient.create({
         data: {
@@ -102,7 +80,7 @@ export const patientRouter = createTRPCRouter({
       return patient;
     }),
   edit_details: protectedProcedure
-    .input(registerPatientSchema)
+    .input(patientSchema)
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.patient.update({
         where: {
@@ -125,5 +103,43 @@ export const patientRouter = createTRPCRouter({
           state: input.state,
         },
       });
+    }),
+  delete_patient: protectedProcedure
+    .input(deletePatientSchema)
+    .mutation(async ({ ctx, input }) => {
+      const fetchPatient = await ctx.db.prescription.findMany({
+        where: {
+          patient_id: input.patient_id,
+        },
+      });
+      const testReportArray = fetchPatient.map((item) =>
+        ctx.db.prescriptionTestReport.deleteMany({
+          where: { prescription_id: item.prescription_id },
+        }),
+      );
+
+      const patientPrescriptionData =
+        ctx.db.prescriptionMedicineData.deleteMany({
+          where: {
+            patient_id: input.patient_id,
+          },
+        });
+      const patientPrescription = ctx.db.prescription.deleteMany({
+        where: {
+          patient_id: input.patient_id,
+        },
+      });
+      const patient = ctx.db.patient.delete({
+        where: {
+          patient_id: input.patient_id,
+        },
+      });
+
+      return await ctx.db.$transaction([
+        ...testReportArray,
+        patientPrescriptionData,
+        patientPrescription,
+        patient,
+      ]);
     }),
 });

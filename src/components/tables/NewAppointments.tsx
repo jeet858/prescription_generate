@@ -29,7 +29,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
         slots={{ backdrop: StyledBackdrop }}
         className="flex items-center justify-center"
       >
-        <div className="flex h-2/5 w-[30%] flex-col self-center bg-white">
+        <div className="flex h-4/5 w-4/5 flex-col self-center bg-white tablet:w-[85%]">
           <div className="flex h-fit w-full justify-center text-2xl">
             <p>Select</p>
             <p className="pl-2 text-[#E52727]">Template</p>
@@ -56,7 +56,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
           {/* add code for popup to select templates */}
           <div className="flex h-full w-full flex-col overflow-y-scroll pb-2 pl-1">
             <div
-              className="flex h-fit min-h-fit w-full cursor-pointer border-b border-black hover:bg-[#F0F0F0]"
+              className="flex h-fit min-h-fit w-full cursor-pointer gap-x-2 border-b border-black hover:bg-[#F0F0F0]"
               onClick={() => {
                 router.push({
                   pathname: "patient-prescription",
@@ -87,7 +87,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
                 return (
                   <div
                     key={index}
-                    className="flex h-fit w-full cursor-pointer border-b border-black hover:bg-[#F0F0F0]"
+                    className="flex h-fit w-full cursor-pointer gap-x-2 border-b border-black hover:bg-[#F0F0F0]"
                     onClick={() => {
                       console.log(attendPatientData);
                       console.log(template.template_id);
@@ -120,9 +120,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
       <Heading
         SecondHeading1={"New Appointment"}
         SecondHeading2={"List"}
-        text={
-          "Lorem ipsum dolor amet consectetur adipisicing eliteiuim sete eiusmod tempor incididunt ut labore etnalom dolore magna aliqua udiminimate veniam quis norud."
-        }
+        text={""}
       />
       <div className="flex h-[5%] justify-start space-x-2">
         <input
@@ -170,28 +168,29 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
                     .includes(searchData.toLocaleLowerCase()) ||
                   item.last_name
                     .toLocaleLowerCase()
-                    .includes(searchData.toLocaleLowerCase()),
+                    .includes(searchData.toLocaleLowerCase()) ||
+                  item.contact_number.toString().includes(searchData),
               )
               .map((item, index) => (
                 <div
                   key={index}
                   className={`${index % 2 !== 0 ? "bg-[#F9F1F1]" : "bg-[#F0F0F0]"} flex h-[86px]`}
                 >
-                  <div className="flex  w-[15%] items-center justify-center">
+                  <div className="flex  w-[15%] items-center justify-center text-center tablet:text-sm">
                     {item.patient_id}
                   </div>
-                  <div className="flex  w-[20%] items-center justify-center">
+                  <div className="flex  w-[20%] items-center justify-center text-center tablet:text-sm">
                     {item.first_name} {item.last_name}
                   </div>
-                  <div className="flex w-[15%] items-center justify-center">
+                  <div className="flex w-[15%] items-center justify-center text-center tablet:text-sm">
                     {item.age}
                   </div>
-                  <div className="flex  w-[20%] items-center justify-center">
+                  <div className="flex  w-[20%] items-center justify-center text-center tablet:text-sm">
                     {item.contact_number.toString()}
                   </div>
-                  <div className="flex w-[30%] items-center justify-center space-x-4">
+                  <div className="flex w-[30%] items-center justify-center space-x-4 tablet:space-x-2 tablet:text-sm ">
                     <button
-                      className="h-[41px] w-[95px] bg-[#FCA19F] hover:bg-[#F36562]"
+                      className="h-[41px] w-[95px] bg-[#FCA19F] hover:bg-[#F36562] tablet:h-[30px] tablet:w-[70px]"
                       onClick={() => {
                         router.push({
                           pathname: "patient-details",
@@ -204,7 +203,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
                       DETAILS
                     </button>
                     <button
-                      className="h-[41px] w-[95px] bg-[#FCA19F] hover:bg-[#F36562]"
+                      className="h-[41px] w-[95px] bg-[#FCA19F] hover:bg-[#F36562] tablet:h-[30px] tablet:w-[70px]"
                       onClick={() => {
                         setAttendPatientData(item.patient_id);
                         handleOpen();
@@ -217,7 +216,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
                       ATTEND
                     </button>
 
-                    <button
+                    {/* <button
                       className="h-[41px] w-[95px] bg-[#FCA19F] hover:bg-[#F36562]"
                       onClick={() => {
                         router.push({
@@ -229,7 +228,7 @@ const NewAppointmentsTable: React.FunctionComponent = () => {
                       }}
                     >
                       REPORT
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}

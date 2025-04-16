@@ -29,10 +29,10 @@ const DragAndDrop: React.FunctionComponent<DragAndDropProps> = (props) => {
         patient_id: string;
         date: Date;
         symptom: string;
-        bp: string;
+        bp: string | null;
         tests: string | null;
         diagnosis: string;
-        weight: number;
+        weight: number | null;
         note: string | null;
       }
     | undefined

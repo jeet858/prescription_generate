@@ -114,7 +114,7 @@ const DoctorLogin: React.FunctionComponent = () => {
               The Care &
             </p>
             <p className="mb-4 ml-12 text-7xl font-bold text-white">
-              Compression
+              Compassion
             </p>
             <p className="mb-4 ml-12 text-7xl font-bold text-[#F36562]">
               You Need

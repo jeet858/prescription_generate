@@ -130,7 +130,7 @@ const PrescriptionViewComponent: React.FunctionComponent<
       setPreviewData({
         patient: patientData,
         prescription_data: {
-          bp: data.bp,
+          bp: data.bp as string,
           reports: data.reports as string,
           diagnosis: data.diagnosis,
           medicine: arr,
@@ -138,7 +138,7 @@ const PrescriptionViewComponent: React.FunctionComponent<
           patient_id: data.patient_id,
           symptom: data.symptom,
           tests: data.tests as string,
-          weight: data.weight.toString(),
+          weight: data.weight ? data.weight.toString() : "",
         },
       });
     }

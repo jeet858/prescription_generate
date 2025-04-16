@@ -23,13 +23,11 @@ const prescriptionInputSchema = z.object({
   symptom: z.string({
     required_error: "Describe your basic units name",
   }),
-  bp: z.string({
-    required_error: "Describe your basic units name",
-  }),
+  bp: z.string(),
   diagnosis: z.string({
     required_error: "Describe your basic units name",
   }),
-  weight: z.string({ required_error: "Describe your basic units name" }),
+  weight: z.string(),
   note: z.string(),
   tests: z.string(),
   reports: z.string(),

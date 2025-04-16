@@ -43,9 +43,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
       {
         patient_id: patient_id as string,
       },
-      {
-        refetchInterval: 2000,
-      },
+      { refetchInterval: 2000 },
     );
   const {
     data: previousPrescriptionData,
@@ -115,8 +113,10 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
         note: previousPrescriptionData.prescription.note as string,
         symptom: previousPrescriptionData.prescription.symptom,
         diagnosis: previousPrescriptionData.prescription.diagnosis,
-        bp: previousPrescriptionData.prescription.bp,
-        weight: previousPrescriptionData.prescription.weight.toString(),
+        bp: previousPrescriptionData.prescription.bp as string,
+        weight: previousPrescriptionData.prescription.weight
+          ? previousPrescriptionData.prescription.weight.toString()
+          : "",
       });
 
       // Set initial fetch done to true
@@ -212,9 +212,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
       console.log(prescriptionData.medicine.length);
     } else if (
       prescriptionData.symptom === "" ||
-      prescriptionData.diagnosis === "" ||
-      prescriptionData.weight === "" ||
-      prescriptionData.bp === ""
+      prescriptionData.diagnosis === ""
     ) {
       setProcessingPopup(false);
       setErrorPopup({ type: "prescription_data", state: true });
@@ -272,7 +270,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
           onClick={() => {
             setErrorPopup({ state: false, type: "" });
           }}
-          message={`${errorPopup.type === "id" ? "Patient id is not available please restart the process" : errorPopup.type === "medicine_empty" ? "Please add atleast one medicine in order to continue" : errorPopup.type === "medicine_pending" ? "You have unsaved medicines please save or remove them before continue" : errorPopup.type === "prescription_data" ? "Please enter symptom , diagnosis, bp and weight" : `Error occured contact developers ${errorPopup.type}`}`}
+          message={`${errorPopup.type === "id" ? "Patient id is not available please restart the process" : errorPopup.type === "medicine_empty" ? "Please add atleast one medicine in order to continue" : errorPopup.type === "medicine_pending" ? "You have unsaved medicines please save or remove them before continue" : errorPopup.type === "prescription_data" ? "Please enter symptom , diagnosis, " : `Error occured contact developers ${errorPopup.type}`}`}
         />
       </Modal>
       <Modal
@@ -330,7 +328,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
         aria-describedby="unstyled-modal-description"
         open={open}
         onClose={handleClose}
-        className="flex  items-center justify-center"
+        className="flex   justify-center overflow-x-scroll overflow-y-scroll"
       >
         <PrescipttionPopup
           patient={patient}
@@ -382,8 +380,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
                   <p className="w-[20%] text-lg font-bold xl2:w-fit xl2:text-sm">
                     Symptoms
                   </p>
-                  <input
-                    type="text"
+                  <textarea
                     placeholder="Enter Symptoms"
                     className="m-2 h-full w-[70%] border-2 border-[#9AA0B9] p-2 focus:outline-[#9AA0B9]"
                     value={prescriptionData.symptom}
@@ -418,8 +415,7 @@ const Prescriptiion: React.FunctionComponent<Iprops> = (props) => {
                   <p className="w-[20%] text-lg font-bold xl2:w-fit xl2:text-sm">
                     Diagnosis
                   </p>
-                  <input
-                    type="text"
+                  <textarea
                     placeholder="Enter Diagnosis"
                     value={prescriptionData.diagnosis}
                     className="m-2 h-full w-[70%] border-2 border-[#9AA0B9] p-2 focus:outline-[#9AA0B9]"

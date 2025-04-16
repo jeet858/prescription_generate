@@ -5,7 +5,7 @@ import { styled, css } from "@mui/system";
 import { Modal as BaseModal } from "@mui/base/Modal";
 import { FaSearch, FaEdit, FaPen } from "react-icons/fa";
 import { api } from "~/utils/api";
-import { FaXmark } from "react-icons/fa6";
+import { FaX, FaXmark } from "react-icons/fa6";
 import SuccessPopup from "../popups/Success";
 import ErrorPopup from "../popups/Error";
 
@@ -14,16 +14,30 @@ const Template: React.FunctionComponent = () => {
   const [successPopupOpen, setSuccessPopupOpen] = React.useState(false);
   const [errorPopup, setErrorPopup] = React.useState({
     state: false,
-    type: "",
+    message: "",
   });
   const [searchData, setSearchData] = React.useState("");
+  const [isEditing, setIsEditing] = React.useState(false);
   const date = new Date();
-  const { data: templates } = api.template.get_all.useQuery();
-  const { data: templatesData } = api.template.get_all_data.useQuery();
+  const { data: templates } = api.template.get_all.useQuery(undefined, {
+    refetchInterval: 1000,
+  });
+  const { data: templatesData } = api.template.get_all_data.useQuery(
+    undefined,
+    {
+      refetchInterval: 1000,
+    },
+  );
+  const { data: repeatitions } = api.medicine.get_repetitions.useQuery(
+    undefined,
+    {
+      refetchInterval: 1000,
+    },
+  );
   const { data: meds } = api.medicine.get_all.useQuery();
   const [templateData, setTemplateData] = React.useState({
     template_id: "",
-    description: " ",
+    description: "",
     template_data: [] as {
       medicine: string;
       repeatitions: string;
@@ -71,11 +85,40 @@ const Template: React.FunctionComponent = () => {
       id: "",
     });
     setOpen(false);
+    setIsEditing(false);
   };
   const create_template = api.template.create_template.useMutation({
     onError: (err, context) => {
-      alert("Error occured");
-      console.log(err.data);
+      setErrorPopup({
+        state: true,
+        message: `Error occured while creating the template ${err.message}`,
+      });
+    },
+    onSuccess: () => {
+      handleClose();
+      setSuccessPopupOpen(true);
+      setMedicineList({
+        id: "",
+        medicine: "",
+        repeatitions: "",
+      }),
+        setTemplateData({
+          template_id: "",
+          description: " ",
+          template_data: [] as {
+            medicine: string;
+            repeatitions: string;
+            id: string;
+          }[],
+        });
+    },
+  });
+  const delete_template = api.template.deleteTemplate.useMutation({
+    onError: (err, context) => {
+      setErrorPopup({
+        state: true,
+        message: `Error occured while deleting the template ${err.message}`,
+      });
     },
     onSuccess: () => {
       handleClose();
@@ -103,25 +146,48 @@ const Template: React.FunctionComponent = () => {
       templateData.template_data.length === 0
     ) {
       if (templateData.template_id === "") {
-        setErrorPopup({ type: "id", state: true });
+        setErrorPopup({
+          message: "id error occured please try again or contact developers",
+          state: true,
+        });
       } else if (templateData.template_data.length === 0) {
-        setErrorPopup({ type: "medicine_empty", state: true });
+        setErrorPopup({
+          message: "Please add atleast one medicine",
+          state: true,
+        });
       }
       console.log(templateData.template_data.length);
     } else {
       if (medicineList.medicine !== "" || medicineList.repeatitions !== "") {
-        setErrorPopup({ type: "medicine_pending", state: true });
+        setErrorPopup({
+          message: "Please save the current medicine input",
+          state: true,
+        });
       } else {
+        const exists = templates?.some(
+          (template) => template.template_id === templateData.template_id,
+        );
+        if (exists && !isEditing) {
+          setErrorPopup({
+            message: "A template already exists with same name",
+            state: true,
+          });
+          return;
+        }
         create_template.mutate(templateData);
       }
     }
   };
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full overflow-x-hidden">
       <div className="relative h-fit w-full">
-        <TriggerButton type="button" onClick={handleOpen}>
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="absolute left-[83.7%] top-[5%] h-[41px] w-[182px] rounded-[8px] bg-[#f36562] text-white tablet:left-[78%] tablet:h-fit tablet:w-[110px]"
+        >
           Add New Template
-        </TriggerButton>
+        </button>
         <Modal
           aria-labelledby="unstyled-modal-title"
           aria-describedby="unstyled-modal-description"
@@ -149,7 +215,7 @@ const Template: React.FunctionComponent = () => {
                 <div className=" flex flex-row items-center">
                   <span className="w-[20%] font-bold">Description</span>
                   <textarea
-                    placeholder="Enter Description"
+                    placeholder="Enter Description(Optional)"
                     className="max-h-10 min-h-10 grow rounded-sm border border-[#DBDBDB] bg-[#FFFDFD] p-[1%]"
                     name="description"
                     value={templateData.description}
@@ -164,11 +230,11 @@ const Template: React.FunctionComponent = () => {
                   {templateData.template_data.map((item, index) => {
                     return (
                       <div
-                        className="my-2 flex w-3/5 items-center justify-between text-xl"
+                        className="my-2 flex w-full items-center justify-between text-xl"
                         key={index}
                       >
-                        <p className="w-2/4">{item.medicine}</p>
-                        <p className="w-1/4">{item.repeatitions}</p>
+                        <p className="w-2/5">{item.medicine}</p>
+                        <p className="w-2/5">{item.repeatitions}</p>
                         <FaPen
                           className="h-4 w-4 text-[#4690C7]"
                           onClick={() => {
@@ -215,7 +281,10 @@ const Template: React.FunctionComponent = () => {
                           onClick={() => {
                             const updatedMedicineList =
                               templateData.template_data.filter(
-                                (ele) => ele.id !== item.id,
+                                (ele) =>
+                                  ele.id !== item.id ||
+                                  ele.medicine !== item.medicine ||
+                                  ele.repeatitions !== item.repeatitions,
                               );
                             setTemplateData({
                               ...templateData,
@@ -244,25 +313,37 @@ const Template: React.FunctionComponent = () => {
                       ))}
                     </datalist>
                   </div>
-                  <select
+                  <input
                     id=""
+                    list="repeatitions_list"
                     name="repeatitions"
+                    placeholder="Repeatitions"
                     className="m-[5%] h-12 w-[40%] rounded-sm border border-[#DBDBDB] bg-[#FFFDFD] p-[1%]"
                     value={medicineList.repeatitions}
                     onChange={handleMedicineChange}
-                  >
+                  />
+                  <datalist id="repeatitions_list">
                     <option value=""></option>
-                    <option value="OD BM">OD BM</option>
-                    <option value="OD AM">OD AM</option>
-                    <option value="BD AM">BD AM</option>
-                    <option value="BD BM">BD BM</option>
-                    <option value="TD BM">TD BM</option>
-                    <option value="TD AM">TD AM</option>
-                  </select>
+                    {repeatitions?.map((item, index) => {
+                      return <option value={item.name} key={index}></option>;
+                    })}
+                  </datalist>
+
                   <button
                     className="text-[#F36562]"
                     onClick={() => {
                       console.log(medicineList);
+                      if (
+                        medicineList.medicine === "" ||
+                        medicineList.repeatitions === ""
+                      ) {
+                        setErrorPopup({
+                          state: true,
+                          message: "Medicine or repeatitions cant be empty",
+                        });
+
+                        return;
+                      }
                       setTemplateData((prevData) => ({
                         ...prevData,
                         template_data: [
@@ -292,7 +373,6 @@ const Template: React.FunctionComponent = () => {
                   className="h-10 w-[103px] bg-[#F36562]"
                   onClick={() => {
                     console.log(templateData);
-
                     create();
                   }}
                 >
@@ -323,15 +403,15 @@ const Template: React.FunctionComponent = () => {
           aria-describedby="unstyled-modal-description"
           open={errorPopup.state}
           onClose={() => {
-            setErrorPopup({ state: false, type: "" });
+            setErrorPopup({ state: false, message: "" });
           }}
           slots={{ backdrop: StyledBackdrop }}
         >
           <ErrorPopup
             onClick={() => {
-              setErrorPopup({ state: false, type: "" });
+              setErrorPopup({ state: false, message: "" });
             }}
-            message={`${errorPopup.type === "id" ? "Please enter a valid id" : errorPopup.type === "medicine_empty" ? "Please add atleast one medicine in order to continue" : "You have unsaved medicines please save or remove them before continue"}`}
+            message={errorPopup.message}
           />
         </Modal>
         <Heading SecondHeading1="Templates" SecondHeading2="" text="" />
@@ -352,8 +432,9 @@ const Template: React.FunctionComponent = () => {
       <div className="h-[66%] w-full flex-col overflow-y-scroll">
         <div className="flex flex-col">
           <div className="sticky top-0 flex h-[86px] w-full flex-row items-center justify-evenly bg-white">
-            <div className="flex w-1/5 justify-center">Template</div>
-            <div className="flex w-1/5 justify-center">Action</div>
+            <div className="flex w-1/3 justify-center">Template</div>
+            <div className="flex w-1/3 justify-center">Description</div>
+            <div className="flex w-1/3 justify-center">Action</div>
           </div>
           {templates
             ?.filter(
@@ -363,15 +444,19 @@ const Template: React.FunctionComponent = () => {
             .map((item, index) => (
               <div
                 key={index}
-                className={`${index % 2 !== 0 ? "bg-[#F9F1F1]" : "bg-[#F0F0F0]"} flex h-[86px] w-full flex-row items-center justify-evenly`}
+                className={`${index % 2 !== 0 ? "bg-[#F9F1F1]" : "bg-[#F0F0F0]"} flex h-[86px] w-full flex-row items-center justify-evenly tablet:text-center tablet:text-sm`}
               >
-                <div className="flex w-1/5 justify-center">
+                <div className="flex w-1/3 justify-center  text-center">
                   {item.template_id}
                 </div>
-                <div className="flex w-1/5 justify-center text-[#F36562]">
+                <div className="flex w-1/3 justify-center text-center">
+                  {item.description}
+                </div>
+                <div className="flex w-1/3 justify-center gap-x-4 text-[#F36562]">
                   <FaEdit
                     onClick={() => {
                       handleOpen();
+                      setIsEditing(true);
                       const temp_data = templatesData?.filter(
                         (ele) => ele.template_id === item.template_id,
                       );
@@ -386,6 +471,13 @@ const Template: React.FunctionComponent = () => {
                         template_id: item.template_id,
                         description: item.description,
                         template_data: temp_array,
+                      });
+                    }}
+                  />
+                  <FaX
+                    onClick={() => {
+                      delete_template.mutate({
+                        template_id: item.template_id,
                       });
                     }}
                   />
@@ -501,11 +593,6 @@ const TriggerButton = styled("button")(
     border: 1px solid ${theme.palette.mode === "dark" ? grey[700] : grey[200]};
     color: ${theme.palette.mode === "dark" ? grey[200] : grey[900]};
     box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-
-    // &:hover {
-    //   background: ${theme.palette.mode === "dark" ? grey[800] : grey[50]};
-    //   border-color: ${theme.palette.mode === "dark" ? grey[600] : grey[300]};
-    // }
 
     &:active {
       background: ${theme.palette.mode === "dark" ? grey[700] : grey[100]};
